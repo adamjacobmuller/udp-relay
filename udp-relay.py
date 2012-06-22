@@ -5,7 +5,10 @@ import select
 import os
 import sys
 import iptools
+import re
+import ffprobe
 from hdhomerun import *
+from pprint import pprint
 
 def save_receivers(receivers):
     return True
@@ -64,8 +67,8 @@ localip=libhdhr.device_get_local_machine_addr(device)
 target='udp://%s:%d/' % ( iptools.long2ip(localip) , udp_relay_listen_port )
 libhdhr.device_set_tuner_target(device,target)
 
-control=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-control.bind(('0.0.0.0',udp_control_listen_port))
+control=socket.socket(socket.AF_INET6,socket.SOCK_DGRAM)
+control.bind(('::0',udp_control_listen_port))
 control.setblocking(False)
 control_fh=control.fileno()
 
@@ -74,7 +77,7 @@ listener.bind(('0.0.0.0',udp_relay_listen_port))
 listener.setblocking(False)
 listener_fh=listener.fileno()
 
-transmitter=socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+transmitter=socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
 
 receivers=[]
 packets=0
@@ -87,6 +90,9 @@ interval_counter=0
 vstatus=None
 current_target=None
 
+probe=True
+prober=None
+
 while 1:
     did_something=False
     try:
@@ -98,6 +104,17 @@ while 1:
     
         for reciever in receivers:
             transmitter.sendto(data[0],reciever)
+        if probe==True:
+            if prober==None:
+                prober=ffprobe.ffprobe()
+            if prober.need_data():
+                prober.append_data(data[0])
+            else:
+                print
+                print prober.pprint()
+                probe=False
+                prober=None
+
         did_something=True
     except socket.error:
         pass
@@ -132,12 +149,16 @@ while 1:
             command=dsplit[0]
             args=dsplit[1:]
             if command=="ADD_RECEIVER":
-                receivers.append((args[0],int(args[1])))
+                ip=args[0]
+                port=int(args[1])
+                if re.match("^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$",ip):
+                    ip="::ffff:%s" % ip
+                receivers.append((ip,port))
                 print "\n%s - %s:%d : added receiver %s:%d" % (
                     time.strftime("%Y-%m-%d %H:%M:%S %Z"),
                     data[1][0],
                     data[1][1],
-                    args[0],int(args[1])
+                    ip,port
                     )
                 save_receivers(receivers)
                 control.sendto("RECEIVER_ADDED",data[1])
@@ -200,7 +221,17 @@ while 1:
                     )
                 receivers=[]
                 save_receivers(receivers)
+            elif command=="PROBE":
+                probe=True
+                print "\n%s - %s:%d : probing" % (
+                    time.strftime("%Y-%m-%d %H:%M:%S %Z"),
+                    data[1][0],
+                    data[1][1],
+                    )
+                receivers=[]
+                save_receivers(receivers)
             elif command=="SET_CHANNEL":
+                probe=True
                 print "\n%s - %s:%d : setting vchannel to %d" % (
                     time.strftime("%Y-%m-%d %H:%M:%S %Z"),
                     data[1][0],
