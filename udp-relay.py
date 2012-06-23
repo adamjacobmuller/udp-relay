@@ -7,6 +7,7 @@ import sys
 import iptools
 import re
 import ffprobe
+import ffmpeg
 from hdhomerun import *
 from pprint import pprint
 
@@ -90,8 +91,10 @@ interval_counter=0
 vstatus=None
 current_target=None
 
-probe=True
 prober=None
+
+screenshot_default_count=1
+screenshotter=None
 
 while 1:
     did_something=False
@@ -104,17 +107,23 @@ while 1:
     
         for reciever in receivers:
             transmitter.sendto(data[0],reciever)
-        if probe==True:
-            if prober==None:
-                prober=ffprobe.ffprobe()
+
+        if prober is not None:
             if prober.need_data():
                 prober.append_data(data[0])
             else:
-                print
                 print prober.pprint()
-                probe=False
                 prober=None
 
+        if screenshotter is not None:
+            if screenshotter.need_data():
+                screenshotter.append_data(data[0])
+            else:
+                screenshotter.finish()
+                print "screenshot done I think"
+                screenshotter=None
+
+        
         did_something=True
     except socket.error:
         pass
@@ -221,17 +230,31 @@ while 1:
                     )
                 receivers=[]
                 save_receivers(receivers)
+            elif command=="SCREENSHOT":
+                screenshotter=ffmpeg.ffmpeg()
+                screenshotter.output=[
+                    '/www/hdhr.adam.gs/screenshot/%s-%s-%s.png' %
+                        (
+                            time.strftime("%Y-%m-%d_%H:%M:%S_%Z"),
+                            vstatus[2].vchannel,
+                            vstatus[2].name
+                        )
+                ]
+                screenshotter.start()
+                print "\n%s - %s:%d : making screenshot" % (
+                    time.strftime("%Y-%m-%d %H:%M:%S %Z"),
+                    data[1][0],
+                    data[1][1],
+                    )
             elif command=="PROBE":
-                probe=True
+                prober=ffprobe.ffprobe()
                 print "\n%s - %s:%d : probing" % (
                     time.strftime("%Y-%m-%d %H:%M:%S %Z"),
                     data[1][0],
                     data[1][1],
                     )
-                receivers=[]
-                save_receivers(receivers)
             elif command=="SET_CHANNEL":
-                probe=True
+                prober=ffprobe.ffprobe()
                 print "\n%s - %s:%d : setting vchannel to %d" % (
                     time.strftime("%Y-%m-%d %H:%M:%S %Z"),
                     data[1][0],

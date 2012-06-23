@@ -84,8 +84,9 @@ class ffprobe:
             elif stream['codec_type']=="data":
                 continue
             else:
-                print "unknown codec type: %s" % stream['codec_type']
-                pprint(stream)
+                if stream['codec_type']!="unknown":
+                    print "unknown codec type: %s" % stream['codec_type']
+                #pprint(stream)
         return "%s [ %s ]" % (
             self.format['format_long_name'],
             ", ".join(streams_string_list)
