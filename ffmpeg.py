@@ -89,10 +89,13 @@ class ffmpeg:
         except IOError: pass
     
         try:
-            l_stderr=self.ffmpeg_process.stderr.readline().decode().strip()
+            l_stderr_r=self.ffmpeg_process.stderr.readline()
+            l_stderr=l_stderr_r.decode(errors='replace').strip()
             if self.debug==True and len(l_stderr)>0:
                 print("STDERR: %s" % l_stderr)
         except IOError: pass
+        except UnicodeDecodeError:
+            print("unable to decode %s" % (l_stderr_r))
 
 
         self.ffmpeg_process.poll()
