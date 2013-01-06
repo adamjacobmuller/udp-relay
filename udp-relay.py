@@ -8,6 +8,8 @@ import iptools
 import re
 import ffprobe
 import ffmpeg
+import BaseHTTPServer
+
 from hdhomerun import *
 from pprint import pprint
 
@@ -96,6 +98,15 @@ prober=None
 screenshot_default_count=1
 screenshotter=None
 
+segdir="/www/hdhr.adam.gs/hls/"
+segindex=0
+segfile="/www/hdhr.adam.gs/hls/%016d.ts" % segindex
+segfh=open(segfile,"w")
+segwrote=0
+segsize=1024*1024*15
+segments=[]
+
+
 while 1:
     did_something=False
     try:
@@ -123,6 +134,17 @@ while 1:
                 print "screenshot done I think"
                 screenshotter=None
 
+        if segdir is not None:
+            segfh.write(data[0])
+            segwrote+=len(data[0])
+
+            if segwrote > segsize:
+                segfh.close()
+                segindex+=1
+                segfile="/www/hdhr.adam.gs/hls/%016d.ts" % segindex
+                segfh=open(segfile,"w")
+                segwrote=0
+                segments.append(segfile)
         
         did_something=True
     except socket.error:
