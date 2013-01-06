@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+ <specVersion>
+   <major>1</major>
+   <minor>0</minor>
+ </specVersion>
+<device>
+<deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
+<friendlyName>HDHR TV</friendlyName>
+<manufacturer>FAKEManufacturer</manufacturer>
+<modelDescription>FAKEModelDesc</modelDescription>
+<modelName>FAKEModelName</modelName>
+<modelNumber>FAKEModelNumber</modelNumber>
+<modelURL>http://127.0.0.1/modelURL</modelURL>
+<UDN>uuid:7ec3e01b-241b-4759-b904-3fe3affba64e</UDN>
+<serviceList>
+<service>
+<serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
+<serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
+<controlURL>/MediaServerControlReply.xml</controlURL>
+<eventSubURL>/cdEvent.xml</eventSubURL>
+<SCPDURL>/MediaServerContentDirectory.xml</SCPDURL>
+</service>
+</serviceList>
+</device>
+</root>
