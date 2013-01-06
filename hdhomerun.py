@@ -128,7 +128,9 @@ class hdhomerun_plotsample_t(Structure):
 #
 class LibHdhr:
     def __init__(self):
-        lib = self._libhdhr = cdll.LoadLibrary(util.find_library("hdhomerun"))
+        #libname = util.find_library("hdhomerun")
+        libname="libhdhomerun.so"
+        lib = self._libhdhr = cdll.LoadLibrary(libname)
         # Discovery related functions
         LibHdhr._libfunc(lib.hdhomerun_discover_find_devices_custom, [ c_uint32, c_uint32, c_uint32, POINTER(hdhomerun_discover_device_t), c_int32 ], c_int32)
         LibHdhr._libfunc(lib.hdhomerun_discover_validate_device_id, [ c_uint32 ], _c_bool)
